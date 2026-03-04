@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Incident Timeline — gs://devafharvey22-hackathon/azure-disk-logs/</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      color: #1a1a1a;
+      background: #fff;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    p.meta { color: #666; font-size: 0.85rem; margin-bottom: 2rem; }
+    section { margin-bottom: 2rem; }
+    h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th {
+      text-align: left;
+      padding: 0.4rem 0.75rem;
+      background: #f5f5f5;
+      border-bottom: 2px solid #ddd;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    td { padding: 0.35rem 0.75rem; border-bottom: 1px solid #eee; vertical-align: top; }
+    td.time { white-space: nowrap; color: #555; font-family: monospace; }
+    td.source { white-space: nowrap; color: #777; font-family: monospace; }
+    tr:last-child td { border-bottom: none; }
+    .phase-healthy h2        { background: #d4edda; color: #155724; }
+    .phase-vf-reset h2       { background: #fff3cd; color: #856404; }
+    .phase-io-failure h2     { background: #f8d7da; color: #721c24; }
+    .phase-silent-failure h2 { background: #f8d7da; color: #721c24; }
+    .phase-detection h2      { background: #d1ecf1; color: #0c5460; }
+    .phase-resolution h2     { background: #d4edda; color: #155724; }
+    section.gap { background: #fff8e1; border: 1px solid #ffe082; border-radius: 6px; padding: 1rem 1.25rem; }
+    section.gap h2 { background: none; color: #5d4037; padding: 0; margin-bottom: 0.75rem; }
+    p.gap-reason { margin-top: 0.75rem; color: #444; }
+    td.note { font-style: italic; color: #555; }
+  </style>
+</head>
+<body>
+  <h1>Incident Timeline — Azure Disk / EXT4 Storage Failure</h1>
+  <p class="meta">Source: gs://devafharvey22-hackathon/azure-disk-logs/ | Node: aks-dmv5skbo-94141891-vmss00000Q | Generated: Wed Mar 04 2026 UTC</p>
+
+  <!-- HEALTHY PHASE -->
+  <section class="phase phase-healthy">
+    <h2>Healthy</h2>
+    <table>
+      <thead>
+        <tr><th>Time (UTC)</th><th>Source</th><th>Event</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="time">Jan 15 14:39:00</td>
+          <td class="source">kern.log.1</td>
+          <td>Disk attached as /dev/sdg — SCSI 1:0:0:5 (LUN 5), 25165824 × 4096-byte blocks = 103 GB</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 14:39:11</td>
+          <td class="source">kern.log.1</td>
+          <td>EXT4 filesystem on /dev/sdg mounted with ordered data mode — Neo4j data volume online</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:01:00–22:03:50</td>
+          <td class="source">kern.log.1</td>
+          <td>Node-wide disk reattach cycle: /dev/sdb–sdf re-enumerated and EXT4 volumes remounted (routine Azure maintenance on other LUNs). /dev/sdg unaffected at this point.</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:26:41</td>
+          <td class="source">kern.log.1</td>
+          <td>LUN 5 re-enumerated as /dev/sdg — 16777216 × 4096-byte blocks = 64 GB (capacity changed vs earlier attach; same LUN)</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:26:45</td>
+          <td class="source">kern.log.1</td>
+          <td>EXT4 filesystem on /dev/sdg mounted with ordered data mode — Neo4j data volume online, healthy</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- VF RESET PHASE -->
+  <section class="phase phase-vf-reset">
+    <h2>VF Reset — Azure Host Maintenance</h2>
+    <table>
+      <thead>
+        <tr><th>Time (UTC)</th><th>Source</th><th>Event</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="time">Jan 15 22:28:09</td>
+          <td class="source">kern.log.1</td>
+          <td><strong>Azure host maintenance begins.</strong> hv_netvsc: Data path switched <em>from</em> VF enP64055s1 — SR-IOV virtual function being torn down, network failover to synthetic NIC</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:09</td>
+          <td class="source">kern.log.1</td>
+          <td>hv_netvsc: VF unregistering enP64055s1</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:10</td>
+          <td class="source">kern.log.1</td>
+          <td>hv_netvsc: VF slot 1 removed — PCIe slot torn down</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:10</td>
+          <td class="source">kern.log.1</td>
+          <td><strong>PCIe bus fa37:00 released</strong> (busn_res: [bus 00] is released) — collateral bus reset affects attached SCSI devices</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:27</td>
+          <td class="source">kern.log.1</td>
+          <td>Hyper-V utilities reinitialised: Heartbeat IC v3.0, KVP IC v4.0, Shutdown IC v3.2, TimeSync IC v4.0 — confirms host live-migration or maintenance cycle</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:28</td>
+          <td class="source">kern.log.1</td>
+          <td>hv_balloon: max dynamic memory 32768 MB — balloon driver reset, another host maintenance artefact</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:29</td>
+          <td class="source">kern.log.1</td>
+          <td>hv_netvsc: VF slot 1 added — PCIe slot restored</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:30</td>
+          <td class="source">kern.log.1</td>
+          <td>hv_netvsc: Data path switched <em>to</em> VF enP64055s1 — network VF restored. Host maintenance complete at network layer.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- I/O FAILURE PHASE -->
+  <section class="phase phase-io-failure">
+    <h2>I/O Failure — Disk Errors &amp; Journal Abort</h2>
+    <table>
+      <thead>
+        <tr><th>Time (UTC)</th><th>Source</th><th>Event</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="time">Jan 15 22:28:30<br><small>[2628930.194532]</small></td>
+          <td class="source">kern.log.1</td>
+          <td><strong>First I/O error.</strong> EXT4-fs warning (device sdg): ext4_end_bio I/O error 10 writing to inode 524369 starting block 2143744 — write to journal failing immediately after PCIe bus release</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:30<br><small>[2628930.194538]</small></td>
+          <td class="source">kern.log.1</td>
+          <td>Buffer I/O error on device sdg, logical block 2143744 — block layer confirms I/O failure</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:30<br><small>[2628930.194838]</small></td>
+          <td class="source">kern.log.1</td>
+          <td>EXT4-fs warning: I/O error 10 writing to inode 524370, block 4137473 — second write error</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:30<br><small>[2628930.222187]</small></td>
+          <td class="source">kern.log.1</td>
+          <td>EXT4-fs error (sdg): inode #524348 / #524314 — unable to read inode table block; comm: neo4j.DatabaseR</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:30<br><small>[2628930.237814]</small></td>
+          <td class="source">kern.log.1</td>
+          <td><strong>Data loss confirmed.</strong> EXT4-fs (sdg): "This should not happen!! Data will be lost" — delayed allocation write-back failure (×2 within same second)</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:30<br><small>[2628930.326512–.406477]</small></td>
+          <td class="source">kern.log.1</td>
+          <td>Buffer I/O errors on sdg logical blocks 4165124–4165131 and 2130040 (8 consecutive block errors) — disk I/O completely broken</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:36<br><small>[2628936.158980]</small></td>
+          <td class="source">kern.log.1</td>
+          <td><strong>Journal aborted.</strong> "Aborting journal on device sdg-8." — filesystem fenced, point of no return. All subsequent writes will fail.</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:36<br><small>[2628936.161808]</small></td>
+          <td class="source">kern.log.1</td>
+          <td>Buffer I/O error on sdg logical block 8421376 — lost sync page write (journal superblock write failed)</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:36<br><small>[2628936.165982]</small></td>
+          <td class="source">kern.log.1</td>
+          <td>JBD2: Error -5 detected when updating journal superblock for sdg-8 — journal abort confirmed at JBD2 layer</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:40</td>
+          <td class="source">kern.log.1</td>
+          <td><strong>First noise error begins.</strong> EXT4-fs warning (sdg): htree_dirblock_to_tree inode #655361 error -5 reading directory block; comm: sidecar — post-abort directory reads failing (repeated every ~15s)</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:34:55</td>
+          <td class="source">kern.log.1</td>
+          <td>Azure reattaches disk: SCSI 1:0:0:5 now appears as <strong>/dev/sdh</strong> (same LUN 5, same 64 GB size) — device name changed from sdg to sdh. Disk is healthy at block layer.</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:37:05</td>
+          <td class="source">kern.log.1</td>
+          <td>EXT4-fs error: 14 callbacks suppressed — kernel rate-limiting post-abort errors. neo4j.RaftLogPr process unable to read directory lblock 0 on dead sdg mount.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SILENT FAILURE PHASE -->
+  <section class="phase phase-silent-failure">
+    <h2>Silent Failure — Filesystem Dead, Kubernetes Unaware</h2>
+    <table>
+      <thead>
+        <tr><th>Time (UTC)</th><th>Source</th><th>Event</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="time">Jan 15 22:28:36 onwards</td>
+          <td class="source">kern.log.1 / kern.log</td>
+          <td>EXT4 journal aborted. /dev/sdg mount point dead — all writes fail with EIO. The new device /dev/sdh (reattached LUN 5) is not re-mounted by the kubelet or CSI driver.</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:40<br>– Jan 16 16:19:34</td>
+          <td class="source">kern.log.1 / kern.log</td>
+          <td>EXT4-fs warning (sdg): htree_dirblock_to_tree inode #655361 error -5 — <em>(repeated every ~15s for ~17.8 hours)</em>. sidecar container continuously retrying directory reads on the dead mount.</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:34:55<br>– Jan 16 16:24:44</td>
+          <td class="source">kern.log.1 / kern.log</td>
+          <td>/dev/sdh (LUN 5) remains unattached to any filesystem. VolumeAttachment Kubernetes object continues to report <code>attached: true</code>. CSI driver logs show no errors. Kubernetes has no visibility into EXT4 journal state.</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:37 onwards</td>
+          <td class="source">warn.1</td>
+          <td>neo4j.RaftLogPr unable to read Raft log directory — Neo4j Raft consensus log unreadable. Database writes silently failing.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- DETECTION PHASE -->
+  <section class="phase phase-detection">
+    <h2>Detection / Resolution</h2>
+    <table>
+      <thead>
+        <tr><th>Time (UTC)</th><th>Source</th><th>Event</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="time">Jan 16 16:19:34</td>
+          <td class="source">kern.log</td>
+          <td>Last htree_dirblock_to_tree error seen — sidecar retry loop stops (pod likely deleted or volume unmounted)</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 16 16:24:44</td>
+          <td class="source">kern.log</td>
+          <td><strong>Filesystem remounted read-only</strong> — EXT4-fs (sdg): "Remounting filesystem read-only" (×10 in same second). Indicates an operator or automated recovery action forced a remount, surfacing the failure explicitly.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- DETECTION GAP -->
+  <section class="gap">
+    <h2>Detection Gap</h2>
+    <table>
+      <tbody>
+        <tr>
+          <td class="time">Jan 15 22:28:36</td>
+          <td>First failure signal — journal aborted on /dev/sdg (EXT4 point of no return)</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 15 22:28:30</td>
+          <td>First I/O error and data loss warning (6 seconds before journal abort)</td>
+        </tr>
+        <tr>
+          <td class="time">Jan 16 16:24:44</td>
+          <td>First observable remediation action (filesystem forced read-only)</td>
+        </tr>
+        <tr>
+          <td class="time"><strong>~17 hours 56 minutes</strong></td>
+          <td><strong>Total detection gap (first I/O error → first remediation)</strong></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="gap-reason">
+      <strong>Why the gap was so long:</strong> The Kubernetes VolumeAttachment object continued to report <code>attached: true</code> throughout the entire incident — the CSI driver has no mechanism to inspect EXT4 journal state. The disk was physically reattached by Azure at 22:34:55 (as /dev/sdh) within 6 minutes of the failure, but the kubelet did not re-mount it onto the existing Pod volume path. The dead /dev/sdg mount point silently returned EIO for all writes. The Neo4j <code>neo4j.RaftLogPr</code> process was observed failing to read Raft log directories from 22:37, but no alert fired immediately. The only observable kernel signal during the silent period was the <code>htree_dirblock_to_tree error -5</code> repeating every ~15 seconds for nearly 18 hours, which is post-abort noise not correlated to any alert rule. Detection appears to have required either a Neo4j application-level Raft panic or a manual investigation that triggered the read-only remount at 16:24:44.
+    </p>
+  </section>
+
+  <!-- CAUSAL CHAIN SUMMARY -->
+  <section>
+    <h2 style="background:#e8eaf6;color:#1a237e;padding:0.4rem 0.75rem;border-radius:4px;">Root Cause &amp; Causal Chain</h2>
+    <table>
+      <thead>
+        <tr><th>Step</th><th>Signal</th><th>Time</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Azure Hyper-V host maintenance begins</td><td>Jan 15 22:28:09</td></tr>
+        <tr><td>2</td><td>Network VF (enP64055s1) removed — PCIe bus fa37:00 released</td><td>Jan 15 22:28:10</td></tr>
+        <tr><td>3</td><td>PCIe bus release causes collateral SCSI I/O failure on LUN 5 (/dev/sdg)</td><td>Jan 15 22:28:30</td></tr>
+        <tr><td>4</td><td>EXT4 delayed-allocation write-back fails — data loss confirmed</td><td>Jan 15 22:28:30</td></tr>
+        <tr><td>5</td><td>EXT4 journal aborted on sdg-8 — filesystem fenced</td><td>Jan 15 22:28:36</td></tr>
+        <tr><td>6</td><td>Azure reattaches disk as /dev/sdh (same LUN 5) — block layer healthy</td><td>Jan 15 22:34:55</td></tr>
+        <tr><td>7</td><td>kubelet/CSI does not remount sdh — Pod volume path remains bound to dead sdg</td><td>22:34:55 onwards</td></tr>
+        <tr><td>8</td><td>Neo4j Raft log reads fail continuously (neo4j.RaftLogPr EXT4 errors)</td><td>22:37 onwards</td></tr>
+        <tr><td>9</td><td>Filesystem forcibly remounted read-only — incident surface</td><td>Jan 16 16:24:44</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</body>
+</html>
