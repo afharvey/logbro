@@ -65,7 +65,7 @@ async function applyGrepWithContext(
   return grepEContext(filtered, pattern, contextLines)
 }
 
-export const gcs_list = tool({
+export const list = tool({
   description:
     "List files in a GCS bucket path with sizes and timestamps. Use this first to discover available log files before fetching any content.",
   args: {
@@ -79,7 +79,7 @@ export const gcs_list = tool({
   },
 })
 
-export const gcs_grep_count = tool({
+export const grep_count = tool({
   description:
     "Count how many lines in a GCS log file match a grep pattern, without returning the content. " +
     "Always call this before gcs_grep to check if the result is safe to fetch. " +
@@ -116,7 +116,7 @@ export const gcs_grep_count = tool({
   },
 })
 
-export const gcs_grep = tool({
+export const grep = tool({
   description:
     "Stream a GCS log file (decompressing .gz automatically) and return lines matching a pattern. " +
     "Always call gcs_grep_count first to verify the result is under 200 lines. " +

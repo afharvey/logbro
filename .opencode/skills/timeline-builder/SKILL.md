@@ -21,10 +21,7 @@ Rule: if the same message pattern repeats more than 3 times, collapse to:
 - First occurrence row (full detail)
 - A note in parentheses: `(repeated every ~Xs until <next phase event>)`
 
-Example:
-```
-| Jan 15 22:28:40 | kern.log.1 | EXT4-fs warning: htree_dirblock_to_tree inode #655361 error -5 (repeated every ~15s until resolution at Jan 16 17:34) |
-```
+Example collapsed row: `EXT4-fs warning: htree_dirblock_to_tree inode #655361 error -5 (repeated every ~15s until resolution at Jan 16 17:34)`
 
 ## Phase grouping
 
@@ -48,93 +45,75 @@ Produce a self-contained HTML document. Do not use markdown tables. The HTML mus
 
 ### Page structure
 
-```
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Incident Timeline — [bucket path]</title>
-    <style> ... </style>
-  </head>
-  <body>
-    <h1>Incident Timeline</h1>
-    <p class="meta">Source: [bucket path] &nbsp;|&nbsp; Generated: [UTC timestamp]</p>
+The top-level HTML structure is:
 
-    <!-- One section per phase -->
-    <section class="phase phase-healthy">
-      <h2>Healthy</h2>
-      <table> ... </table>
-    </section>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Incident Timeline — [bucket path]</title>
+        <style> ... </style>
+      </head>
+      <body>
+        <h1>Incident Timeline</h1>
+        <p class="meta">Source: [bucket path] | Generated: [UTC timestamp]</p>
+        <section class="phase phase-healthy">
+          <h2>Healthy</h2>
+          <table> ... </table>
+        </section>
+        <section class="gap">
+          <h2>Detection Gap</h2>
+          <table> ... </table>
+          <p class="gap-reason"> ... </p>
+        </section>
+      </body>
+    </html>
 
-    <!-- Detection gap -->
-    <section class="gap">
-      <h2>Detection Gap</h2>
-      <table> ... </table>
-      <p class="gap-reason"> ... </p>
-    </section>
-  </body>
-</html>
-```
+### CSS to include in the style block
 
-### CSS to include
-
-```css
-body {
-  font-family: system-ui, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
-  max-width: 1100px;
-  margin: 2rem auto;
-  padding: 0 1rem;
-  color: #1a1a1a;
-  background: #fff;
-}
-h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-p.meta { color: #666; font-size: 0.85rem; margin-bottom: 2rem; }
-section { margin-bottom: 2rem; }
-h2 {
-  font-size: 1rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.4rem 0.75rem;
-  border-radius: 4px;
-  margin-bottom: 0.5rem;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-}
-th {
-  text-align: left;
-  padding: 0.4rem 0.75rem;
-  background: #f5f5f5;
-  border-bottom: 2px solid #ddd;
-  font-weight: 600;
-  white-space: nowrap;
-}
-td {
-  padding: 0.35rem 0.75rem;
-  border-bottom: 1px solid #eee;
-  vertical-align: top;
-}
-td.time { white-space: nowrap; color: #555; font-family: monospace; }
-td.source { white-space: nowrap; color: #777; font-family: monospace; }
-tr:last-child td { border-bottom: none; }
-
-/* Phase header colours */
-.phase-healthy h2        { background: #d4edda; color: #155724; }
-.phase-vf-reset h2       { background: #fff3cd; color: #856404; }
-.phase-io-failure h2     { background: #f8d7da; color: #721c24; }
-.phase-silent-failure h2 { background: #f8d7da; color: #721c24; }
-.phase-detection h2      { background: #d1ecf1; color: #0c5460; }
-.phase-resolution h2     { background: #d4edda; color: #155724; }
-
-/* Detection gap box */
-section.gap { background: #fff8e1; border: 1px solid #ffe082; border-radius: 6px; padding: 1rem 1.25rem; }
-section.gap h2 { background: none; color: #5d4037; padding: 0; margin-bottom: 0.75rem; }
-p.gap-reason { margin-top: 0.75rem; color: #444; }
-```
+    body {
+      font-family: system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      color: #1a1a1a;
+      background: #fff;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    p.meta { color: #666; font-size: 0.85rem; margin-bottom: 2rem; }
+    section { margin-bottom: 2rem; }
+    h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th {
+      text-align: left;
+      padding: 0.4rem 0.75rem;
+      background: #f5f5f5;
+      border-bottom: 2px solid #ddd;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    td { padding: 0.35rem 0.75rem; border-bottom: 1px solid #eee; vertical-align: top; }
+    td.time { white-space: nowrap; color: #555; font-family: monospace; }
+    td.source { white-space: nowrap; color: #777; font-family: monospace; }
+    tr:last-child td { border-bottom: none; }
+    .phase-healthy h2        { background: #d4edda; color: #155724; }
+    .phase-vf-reset h2       { background: #fff3cd; color: #856404; }
+    .phase-io-failure h2     { background: #f8d7da; color: #721c24; }
+    .phase-silent-failure h2 { background: #f8d7da; color: #721c24; }
+    .phase-detection h2      { background: #d1ecf1; color: #0c5460; }
+    .phase-resolution h2     { background: #d4edda; color: #155724; }
+    section.gap { background: #fff8e1; border: 1px solid #ffe082; border-radius: 6px; padding: 1rem 1.25rem; }
+    section.gap h2 { background: none; color: #5d4037; padding: 0; margin-bottom: 0.75rem; }
+    p.gap-reason { margin-top: 0.75rem; color: #444; }
 
 ### Phase CSS classes
 
@@ -152,41 +131,37 @@ p.gap-reason { margin-top: 0.75rem; color: #444; }
 
 Each phase table has three columns: Time (UTC), Source, Event.
 
-```html
-<table>
-  <thead>
-    <tr><th>Time (UTC)</th><th>Source</th><th>Event</th></tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td class="time">Jan 15 22:26:41</td>
-      <td class="source">kern.log.1</td>
-      <td>Disk attached as /dev/sdg (LUN 5, 64GB)</td>
-    </tr>
-  </tbody>
-</table>
-```
+    <table>
+      <thead>
+        <tr><th>Time (UTC)</th><th>Source</th><th>Event</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="time">Jan 15 22:26:41</td>
+          <td class="source">kern.log.1</td>
+          <td>Disk attached as /dev/sdg (LUN 5, 64GB)</td>
+        </tr>
+      </tbody>
+    </table>
 
 ## Detection gap summary
 
-Render the detection gap as a `<section class="gap">` containing a two-row table and a plain-text explanation paragraph:
+Render the detection gap as a `section.gap` containing a two-row table and a plain-text explanation paragraph:
 
-```html
-<section class="gap">
-  <h2>Detection Gap</h2>
-  <table>
-    <tbody>
-      <tr><td class="time">Jan 15 22:28:30</td><td>First failure signal in logs</td></tr>
-      <tr><td class="time">Jan 16 12:00</td><td>First human awareness</td></tr>
-      <tr><td class="time"><strong>~13.5 hours</strong></td><td><strong>Total gap</strong></td></tr>
-    </tbody>
-  </table>
-  <p class="gap-reason">
-    VolumeAttachment reported <code>attached: true</code> throughout. CSI driver logs showed
-    no errors. Detection relied on Neo4j application-level Raft panic alert.
-  </p>
-</section>
-```
+    <section class="gap">
+      <h2>Detection Gap</h2>
+      <table>
+        <tbody>
+          <tr><td class="time">Jan 15 22:28:30</td><td>First failure signal in logs</td></tr>
+          <tr><td class="time">Jan 16 12:00</td><td>First human awareness</td></tr>
+          <tr><td class="time"><strong>~13.5 hours</strong></td><td><strong>Total gap</strong></td></tr>
+        </tbody>
+      </table>
+      <p class="gap-reason">
+        VolumeAttachment reported attached: true throughout. CSI driver logs showed
+        no errors. Detection relied on Neo4j application-level Raft panic alert.
+      </p>
+    </section>
 
 ## Source attribution
 
