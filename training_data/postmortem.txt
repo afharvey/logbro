@@ -1,0 +1,185 @@
+Post Mortem: Azure Disk Attachment Failure in AKS
+
+
+
+By Alex Harvey
+
+2 min
+
+11
+
+Add a reaction
+Incident: INC-2717
+Date: 2026-01-15 / 2026-01-16
+Time to Detection: ~13.5 hours
+Time to Resolution: ~18 hours
+Severity: Minor
+Category: Cloud Provider Failure
+Root Cause Component: Azure
+Environment: AKS cluster production-orch-0681
+
+Summary
+An Azure Hyper-V host maintenance event (network VF reset) caused a 64GB managed disk to experience I/O failures and be reattached under a new device name. The Azure CSI driver did not detect or recover from the disk identity change, leaving a Neo4j database pod without a functional mount.
+
+Impact
+Neo4j database 8873345a lost fault tolerance (1 of 3 pods unavailable)
+
+Pod p-8873345a-f477-0006-0 unable to access data volume for ~18 hours
+
+Raft panic: java.io.IOException: Input/output error
+
+EXT4 reported potential data loss
+
+Timeline
+Time (UTC)
+
+Event
+
+Jan 15 22:26:37
+
+VolumeAttachment created for pvc-54b76c0a-872e-48ac-b682-75d28dd3655c
+
+Jan 15 22:26:41
+
+Disk attached as /dev/sdg (LUN 5, 64GB)
+
+Jan 15 22:26:45
+
+EXT4 mounted successfully
+
+Jan 15 22:28:09
+
+Azure Hyper-V network VF switchover begins
+
+Jan 15 22:28:30
+
+I/O errors begin — I/O error 10 writing to inode, Data will be lost
+
+Jan 15 22:28:36
+
+EXT4 journal aborted on sdg
+
+Jan 15 22:34:55
+
+Disk reattached as /dev/sdh — never mounted
+
+Jan 16 12:00
+
+Incident detected via Neo4j Raft panic alert
+
+Jan 16 13:00
+
+Incident channel created
+
+Jan 16 15:36
+
+Investigation huddle started (2h 7m)
+
+Jan 16 16:20
+
+Pod deleted: kubectl delete pod/p-8873345a-f477-0006-0
+
+Jan 16 17:34
+
+Incident resolved — database healthy
+
+Root Cause
+At 22:28:09 UTC on Jan 15, the Azure Hyper-V host performed a network Virtual Function (VF) switchover on node aks-dmv5skbo-94141891-vmss00000q. Kernel logs show:
+
+
+
+hv_netvsc eth0: Data path switched from VF: enP64055s1
+VF slot 1 removed
+pci_bus fa37:00: busn_res: [bus 00] is released
+This host-level maintenance event caused collateral I/O failures on the SCSI disk:
+
+
+
+EXT4-fs warning (device sdg): ext4_end_bio:344: I/O error 10 writing to inode 524369
+EXT4-fs (sdg): This should not happen!! Data will be lost
+Aborting journal on device sdg-8.
+Sequence of failure:
+
+Disk was mounted as /dev/sdg at 22:26:45
+
+Network VF reset occurred at 22:28:09–22:28:30
+
+Immediate I/O errors on sdg at 22:28:30
+
+EXT4 journal aborted at 22:28:36, filesystem corruption confirmed
+
+Azure reattached the same disk as /dev/sdh at 22:34:55
+
+CSI driver did not mount sdh — VolumeAttachment showed success, but no actual mount
+
+Resolution
+Deleted the affected pod, which triggered:
+
+VolumeAttachment deletion
+
+Clean disk detach
+
+Pod reschedule with successful volume mount
+
+Detection Gap
+VolumeAttachment reported attached: true throughout
+
+CSI driver logs showed no errors
+
+Detection relied on Neo4j application-level Raft panic
+
+13.5 hours elapsed before the issue was noticed
+
+Action Items
+Action
+
+Owner
+
+Priority
+
+Open Azure support case: why did VF reset cause disk I/O failure?
+
+TBD
+
+High
+
+Investigate CSI driver behavior during disk reattachment scenarios
+
+TBD
+
+High
+
+Add alerting for pods stuck in unhealthy state with bound PVCs
+
+TBD
+
+High
+
+Document node-level debugging procedure (kubectl debug + chroot) in runbook
+
+TBD
+
+Medium
+
+Evaluate fsck or filesystem health checks in pod liveness probes
+
+TBD
+
+Low
+
+Lessons Learned
+Azure host maintenance events can cause collateral disk failures
+
+Disk device names (sdX) can change during Azure reattachment; CSI driver doesn’t handle this gracefully
+
+Kubernetes VolumeAttachment status does not reflect node-level mount health
+
+Node-level log analysis (kern.log) is essential for storage issues
+
+“This should not happen!! Data will be lost”
+
+
+
+zgrep 'Jan 15 22:2[6-9]\|Jan 15 22:3[0-5]' kern.log.1
+Jan 15 22:28:30 aks-dmv5skbo-94141891-vmss00000Q kernel: [2628930.237814] EXT4-fs (sdg): This should not happen!! Data will be lost
+

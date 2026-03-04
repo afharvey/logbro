@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Incident Timeline — Storage Failure Jan 15 22:28 UTC</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f1117; color: #e2e8f0; line-height: 1.6; padding: 2rem; }
+    h1 { font-size: 1.6rem; font-weight: 700; color: #f8fafc; margin-bottom: 0.25rem; }
+    .subtitle { color: #94a3b8; font-size: 0.9rem; margin-bottom: 2rem; }
+    .summary-box { background: #1e2433; border: 1px solid #334155; border-left: 4px solid #ef4444; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 2.5rem; }
+    .summary-box h2 { font-size: 1rem; color: #f87171; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .summary-box p { color: #cbd5e1; font-size: 0.92rem; margin-bottom: 0.5rem; }
+    .summary-box p:last-child { margin-bottom: 0; }
+    .summary-box strong { color: #e2e8f0; }
+
+    .phase { margin-bottom: 2.5rem; }
+    .phase-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+    .phase-badge { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.2rem 0.6rem; border-radius: 4px; white-space: nowrap; }
+    .badge-precursor  { background: #1e3a5f; color: #7dd3fc; border: 1px solid #0ea5e9; }
+    .badge-trigger    { background: #3b1f00; color: #fbbf24; border: 1px solid #f59e0b; }
+    .badge-cascade    { background: #3b0000; color: #f87171; border: 1px solid #ef4444; }
+    .badge-fatal      { background: #2d0000; color: #fca5a5; border: 1px solid #dc2626; }
+    .badge-aftermath  { background: #1a1f2e; color: #a5b4fc; border: 1px solid #6366f1; }
+    .phase-title { font-size: 1.05rem; font-weight: 600; color: #f1f5f9; }
+
+    .timeline { position: relative; padding-left: 1.5rem; }
+    .timeline::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #334155; border-radius: 1px; }
+
+    .event { position: relative; margin-bottom: 1rem; padding-left: 1.5rem; }
+    .event::before { content: ''; position: absolute; left: -1.45rem; top: 0.45rem; width: 10px; height: 10px; border-radius: 50%; background: #475569; border: 2px solid #1e293b; }
+    .event.sev-info::before    { background: #3b82f6; }
+    .event.sev-warn::before    { background: #f59e0b; }
+    .event.sev-error::before   { background: #ef4444; }
+    .event.sev-critical::before{ background: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.25); }
+
+    .event-time { font-size: 0.78rem; font-family: 'Cascadia Code', 'Fira Code', monospace; color: #64748b; margin-bottom: 0.15rem; }
+    .event-msg  { font-size: 0.88rem; color: #cbd5e1; }
+    .event-msg strong { color: #f1f5f9; }
+    .event-detail { font-size: 0.78rem; font-family: monospace; color: #64748b; background: #161b27; border: 1px solid #1e293b; border-radius: 4px; padding: 0.35rem 0.6rem; margin-top: 0.35rem; white-space: pre-wrap; word-break: break-all; }
+
+    .rca-box { background: #1a1f2e; border: 1px solid #334155; border-left: 4px solid #a78bfa; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 2.5rem; }
+    .rca-box h2 { font-size: 1rem; color: #c4b5fd; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .rca-chain { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1rem; }
+    .rca-node { background: #0f1117; border: 1px solid #334155; border-radius: 6px; padding: 0.4rem 0.75rem; font-size: 0.82rem; color: #e2e8f0; }
+    .rca-arrow { color: #475569; font-size: 1.1rem; }
+    .rca-box ul { list-style: none; padding: 0; }
+    .rca-box li { font-size: 0.88rem; color: #cbd5e1; padding: 0.3rem 0; padding-left: 1.25rem; position: relative; }
+    .rca-box li::before { content: '▸'; position: absolute; left: 0; color: #6366f1; }
+
+    .remediation-box { background: #0d2218; border: 1px solid #166534; border-left: 4px solid #22c55e; border-radius: 8px; padding: 1.25rem 1.5rem; }
+    .remediation-box h2 { font-size: 1rem; color: #86efac; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .remediation-box ul { list-style: none; padding: 0; }
+    .remediation-box li { font-size: 0.88rem; color: #bbf7d0; padding: 0.35rem 0; padding-left: 1.5rem; position: relative; border-bottom: 1px solid #14532d; }
+    .remediation-box li:last-child { border-bottom: none; }
+    .remediation-box li::before { content: '✓'; position: absolute; left: 0; color: #22c55e; font-weight: 700; }
+
+    footer { margin-top: 3rem; font-size: 0.75rem; color: #334155; text-align: center; }
+  </style>
+</head>
+<body>
+
+<h1>Storage Failure Incident Timeline</h1>
+<p class="subtitle">Node: <strong>aks-dmv5skbo-94141891-vmss00000Q</strong> &nbsp;|&nbsp; Incident time: <strong>Jan 15 2026, 22:28 UTC</strong> &nbsp;|&nbsp; Disk: <strong>/dev/sdg (EXT4, 64 GiB)</strong></p>
+
+<div class="summary-box">
+  <h2>Executive Summary</h2>
+  <p>At <strong>22:28:09 UTC</strong> the Hyper-V host rescinded the SR-IOV virtual function (VF) backing the Mellanox/ConnectX NIC (<em>enP64055s1</em>), tearing down the entire <strong>PCIe bus fa37:00</strong>. Because Azure Premium Disk I/O is routed over the VMBus / hv_storvsc SCSI path and the in-flight write queue for <em>/dev/sdg</em> had already been submitted, the sudden bus removal caused every queued write to fail with <code>hv 0xc0000044</code> (SRB_STATUS_ABORTED). This immediately produced cascading EXT4 I/O errors, a JBD2 journal abort, and <strong>confirmed data loss</strong> ("This should not happen!! Data will be lost") for Neo4j database write I/Os that were in flight at the time.</p>
+  <p>The disk was re-attached as <em>/dev/sdh</em> at <strong>22:34:55</strong>, but the EXT4 journal on <em>sdg</em> remained aborted; <em>sidecar</em> and Neo4j processes continued hitting -EIO errors every 15 seconds through at least <strong>22:39:55</strong>. A prior identical VF reset event was recorded at <strong>14:39:10</strong>, indicating this is a recurring Hyper-V host-level event.</p>
+</div>
+
+<!-- ─────────── PHASE 1 ─────────── -->
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-badge badge-precursor">Phase 1 — Precursor</span>
+    <span class="phase-title">Prior VF Reset &amp; storvsc I/O errors (14:39 UTC)</span>
+  </div>
+  <div class="timeline">
+
+    <div class="event sev-warn">
+      <div class="event-time">Jan 15 14:39:00 UTC &nbsp;[uptime 2600761.57 s]</div>
+      <div class="event-msg"><strong>SCSI disks sdc and sdg attached</strong> — node emerges from a prior VF reset cycle; Azure Disk SCSI targets enumerated on hv_storvsc channel <code>f8b3781b-…</code>.</div>
+      <div class="event-detail">scsi 1:0:0:1: [sdc] 103 GB  |  scsi 1:0:0:5: [sdg] 103 GB (both Msft Virtual Disk)</div>
+    </div>
+
+    <div class="event sev-error">
+      <div class="event-time">Jan 15 14:39:10 UTC &nbsp;[uptime 2600771.21 s]</div>
+      <div class="event-msg"><strong>904 hv_storvsc callbacks suppressed</strong> — massive in-flight I/O abort storm on SCSI channel after prior VF reset. All pending WRITE(10) commands on <em>sdc</em> return <code>hostbyte=DID_ERROR</code>.</div>
+      <div class="event-detail">storvsc_on_io_completion: 904 callbacks suppressed
+hv_storvsc f8b3781b-…: tag#124-447 cmd 0x2a status: scsi 0x0 srb 0x4 hv 0xc0000044
+blk_update_request: I/O error, dev sdc, sector 101464064 op 0x1:(WRITE) ...</div>
+    </div>
+
+    <div class="event sev-info">
+      <div class="event-time">Jan 15 14:39:11–12 UTC &nbsp;[uptime 2600772–73 s]</div>
+      <div class="event-msg"><strong>EXT4 mounts succeed</strong> on <em>sdg</em> and <em>sdc</em> — node recovers from the 14:39 event and resumes normal operation. This prior event establishes the pattern.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─────────── PHASE 2 ─────────── -->
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-badge badge-trigger">Phase 2 — Trigger</span>
+    <span class="phase-title">Hyper-V VF Rescind (22:26 – 22:28:10 UTC)</span>
+  </div>
+  <div class="timeline">
+
+    <div class="event sev-info">
+      <div class="event-time">Jan 15 22:26:41 UTC &nbsp;[uptime 2628822.60 s]</div>
+      <div class="event-msg"><strong>SCSI disk sdg re-attached</strong> (64 GiB, 4096-byte sectors) following a prior detach. EXT4 filesystem mounted successfully at 22:26:45.</div>
+      <div class="event-detail">scsi 1:0:0:5: [sdg] 16777216 4096-byte logical blocks (68.7 GB)
+EXT4-fs (sdg): mounted filesystem with ordered data mode. Opts: (null).</div>
+    </div>
+
+    <div class="event sev-info">
+      <div class="event-time">Jan 15 22:26:46 UTC &nbsp;[uptime 2628827.29 s]</div>
+      <div class="event-msg"><strong>Mellanox VF (enP64055s1) active</strong> — network interface link becomes ready; data path is on SR-IOV VF. Normal operation resumes.</div>
+    </div>
+
+    <div class="event sev-critical">
+      <div class="event-time">Jan 15 22:28:09 UTC &nbsp;[uptime 2628910.99 s]</div>
+      <div class="event-msg"><strong>ROOT CAUSE — Hyper-V rescinds SR-IOV VF.</strong> hv_netvsc reports data path switched away from VF <em>enP64055s1</em> back to the synthetic NIC (eth0). This is the host-initiated PCIe device removal event.</div>
+      <div class="event-detail">hv_netvsc 7ced8d99-…: eth0: Data path switched from VF: enP64055s1</div>
+    </div>
+
+    <div class="event sev-critical">
+      <div class="event-time">Jan 15 22:28:09 UTC &nbsp;[uptime 2628911.03 s]</div>
+      <div class="event-msg"><strong>VF unregistering</strong> — enP64055s1 torn down from the kernel NIC stack.</div>
+      <div class="event-detail">hv_netvsc 7ced8d99-…: eth0: VF unregistering: enP64055s1</div>
+    </div>
+
+    <div class="event sev-critical">
+      <div class="event-time">Jan 15 22:28:10 UTC &nbsp;[uptime 2628912.10 s]</div>
+      <div class="event-msg"><strong>PCIe bus fa37:00 released</strong> — VF slot 1 removed; entire PCI bus torn down. All devices hanging off this bus lose their interrupt/DMA paths. In-flight I/O in hv_storvsc buffers is now orphaned.</div>
+      <div class="event-detail">hv_netvsc 7ced8d99-…: eth0: VF slot 1 removed
+pci_bus fa37:00: busn_res: [bus 00] is released</div>
+    </div>
+
+    <div class="event sev-warn">
+      <div class="event-time">Jan 15 22:28:09 UTC (userspace)</div>
+      <div class="event-msg"><strong>networkctl notices enP64055s1 gone</strong> — "Interface not found"; networkd-dispatcher fires but is rejected (PID mismatch). Network briefly falls back to synthetic path.</div>
+      <div class="event-detail">networkctl[2570335]: Interface "enP64055s1" not found.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─────────── PHASE 3 ─────────── -->
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-badge badge-cascade">Phase 3 — Cascade</span>
+    <span class="phase-title">EXT4 I/O Errors on sdg (22:28:27 – 22:28:36 UTC)</span>
+  </div>
+  <div class="timeline">
+
+    <div class="event sev-info">
+      <div class="event-time">Jan 15 22:28:27 UTC &nbsp;[uptime 2628927.19 s]</div>
+      <div class="event-msg"><strong>Hyper-V utilities re-register</strong> (Heartbeat, KVP, Shutdown, TimeSync ICs all at version bump). This marks the VMBus reconnect phase — the host is re-establishing the integration services channel.</div>
+    </div>
+
+    <div class="event sev-info">
+      <div class="event-time">Jan 15 22:28:28–29 UTC &nbsp;[uptime 2628928–29 s]</div>
+      <div class="event-msg"><strong>VF slot re-added; Mellanox mlx5 re-probed</strong> — hv_pci probes bus fa37:00 again; mlx5_core loads firmware 16.30.5026; enP64055s1 re-appears as eth1, then renamed. Data path switches back to VF at 22:28:30.</div>
+      <div class="event-detail">hv_netvsc …: eth0: VF slot 1 added
+mlx5_core fa37:00:02.0: firmware version: 16.30.5026
+hv_netvsc …: eth0: Data path switched to VF: enP64055s1</div>
+    </div>
+
+    <div class="event sev-error">
+      <div class="event-time">Jan 15 22:28:30 UTC &nbsp;[uptime 2628930.19 s]</div>
+      <div class="event-msg"><strong>First EXT4 write I/O errors</strong> on <em>sdg</em> — in-flight writes to Neo4j database inodes 524369 and 524370 return error code 10 (ECONNRESET / host abort). The hv_storvsc layer reported these as failed when the VF tear-down drained its completion queue.</div>
+      <div class="event-detail">EXT4-fs warning (device sdg): ext4_end_bio:344: I/O error 10 writing to inode 524369 starting block 2143744
+Buffer I/O error on device sdg, logical block 2143744</div>
+    </div>
+
+    <div class="event sev-error">
+      <div class="event-time">Jan 15 22:28:30 UTC &nbsp;[uptime 2628930.22 s]</div>
+      <div class="event-msg"><strong>EXT4 inode table reads fail</strong> — Neo4j process <em>neo4j.DatabaseR</em> cannot read inode table blocks 2097185/2097187 for inodes 524314 and 524348. Inode write reservation and dirty-inode marking both fail.</div>
+      <div class="event-detail">EXT4-fs error (device sdg): ext4_get_inode_loc:4453: inode #524314: block 2097185: comm neo4j.DatabaseR: unable to read itable block
+EXT4-fs error (device sdg) in ext4_reserve_inode_write:5806: IO failure
+EXT4-fs error (device sdg): ext4_dirty_inode:6010: inode #524314: mark_inode_dirty error</div>
+    </div>
+
+    <div class="event sev-critical">
+      <div class="event-time">Jan 15 22:28:30 UTC &nbsp;[uptime 2628930.24 s]</div>
+      <div class="event-msg"><strong>CONFIRMED DATA LOSS — Delayed block allocation fails.</strong> EXT4 explicitly logs data loss for inodes 524314 and 524348. Written by Neo4j DatabaseR thread; delayed-allocation blocks cannot be placed because the backing store is unavailable.</div>
+      <div class="event-detail">EXT4-fs (sdg): Delayed block allocation failed for inode 524314 at logical offset 0 with max blocks 1 with error 5
+EXT4-fs (sdg): This should not happen!! Data will be lost
+
+EXT4-fs (sdg): Delayed block allocation failed for inode 524348 at logical offset 0 with max blocks 1 with error 5
+EXT4-fs (sdg): This should not happen!! Data will be lost</div>
+    </div>
+
+    <div class="event sev-error">
+      <div class="event-time">Jan 15 22:28:30 UTC &nbsp;[uptime 2628930.33–41 s]</div>
+      <div class="event-msg"><strong>Sequential buffer I/O errors on logical blocks 4165124–4165131</strong> (8 consecutive 4K blocks = 32 KB extent). Further writes to inode 131262 also fail at block 2130040.</div>
+      <div class="event-detail">Buffer I/O error on device sdg, logical block 4165124 through 4165131 (8 blocks)</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─────────── PHASE 4 ─────────── -->
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-badge badge-fatal">Phase 4 — Fatal</span>
+    <span class="phase-title">Journal Abort (22:28:36 UTC)</span>
+  </div>
+  <div class="timeline">
+
+    <div class="event sev-critical">
+      <div class="event-time">Jan 15 22:28:36 UTC &nbsp;[uptime 2628936.16 s]</div>
+      <div class="event-msg"><strong>JBD2 journal aborted on sdg-8.</strong> EXT4 calls <code>journal_abort</code> after write errors accumulate past recovery threshold. From this point forward, the filesystem is in a permanently read-only / error state. No further writes will be committed.</div>
+      <div class="event-detail">Aborting journal on device sdg-8.
+Buffer I/O error on dev sdg, logical block 8421376, lost sync page write
+JBD2: Error -5 detected when updating journal superblock for sdg-8.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─────────── PHASE 5 ─────────── -->
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-badge badge-aftermath">Phase 5 — Aftermath</span>
+    <span class="phase-title">Persistent Errors &amp; Disk Re-attach (22:28:40 → 22:39+)</span>
+  </div>
+  <div class="timeline">
+
+    <div class="event sev-warn">
+      <div class="event-time">Jan 15 22:28:40 UTC &nbsp;[uptime 2628940.26 s]  →  ongoing every ~15 s</div>
+      <div class="event-msg"><strong>sidecar process hits -EIO every 15 seconds</strong> trying to read directory inode 655361 block 0. Journal is aborted; all block reads return -5 (EIO). This repeats at 15-second intervals through at least 22:39:55 (confirmed 50+ occurrences).</div>
+      <div class="event-detail">EXT4-fs warning (device sdg): htree_dirblock_to_tree:1083: inode #655361: lblock 0: comm sidecar: error -5 reading directory block</div>
+    </div>
+
+    <div class="event sev-warn">
+      <div class="event-time">Jan 15 22:34:55 UTC &nbsp;[uptime 2629315.71 s]</div>
+      <div class="event-msg"><strong>New SCSI disk sdh attached</strong> — Azure Disk SCSI LUN 5 re-appears, this time as <em>sdh</em> (renamed from sdg after the prior error). 64 GiB, 4096-byte sectors. This represents the Kubernetes PV reattach attempt, but the EXT4 errors on the original sdg mount persist — the filesystem is still aborted.</div>
+      <div class="event-detail">sd 1:0:0:5: [sdh] 16777216 4096-byte logical blocks (68.7 GB)
+sd 1:0:0:5: [sdh] Attached SCSI disk</div>
+    </div>
+
+    <div class="event sev-error">
+      <div class="event-time">Jan 15 22:37:05 UTC &nbsp;[uptime 2629445.48 s]</div>
+      <div class="event-msg"><strong>Neo4j RaftLogPr threads also begin hitting directory read errors</strong> — EXT4 <code>__ext4_find_entry</code> errors for inodes 524322 and 524356 (Neo4j Raft log directories). The aborted journal is now blocking all Neo4j I/O paths.</div>
+      <div class="event-detail">EXT4-fs error (device sdg): __ext4_find_entry:1683: inode #524322: comm neo4j.RaftLogPr: reading directory lblock 0
+EXT4-fs error (device sdg): __ext4_find_entry:1683: inode #524356: comm neo4j.RaftLogPr: reading directory lblock 0</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─────────── ROOT CAUSE ANALYSIS ─────────── -->
+<div class="rca-box">
+  <h2>Root Cause Analysis</h2>
+  <div class="rca-chain">
+    <div class="rca-node">Hyper-V host rescinds SR-IOV VF</div>
+    <div class="rca-arrow">→</div>
+    <div class="rca-node">PCIe bus fa37:00 released</div>
+    <div class="rca-arrow">→</div>
+    <div class="rca-node">hv_storvsc aborts in-flight writes (hv 0xc0000044)</div>
+    <div class="rca-arrow">→</div>
+    <div class="rca-node">EXT4 write I/O errors on sdg</div>
+    <div class="rca-arrow">→</div>
+    <div class="rca-node">JBD2 journal abort</div>
+    <div class="rca-arrow">→</div>
+    <div class="rca-node">Data loss + persistent -EIO</div>
+  </div>
+  <ul>
+    <li>The <strong>root cause is a Hyper-V host-level SR-IOV VF rescind</strong> at 22:28:09 UTC. This is a platform event (live migration, host update, NIC firmware reset, or SR-IOV resource reclaim) and is not visible as a VM-level fault.</li>
+    <li>The VF tear-down removed the PCIe bus (fa37:00) shared by the Mellanox NIC. Although Azure Disk uses the separate VMBus/hv_storvsc path, the <strong>in-flight I/O completions were aborted</strong> when the VMBus channel reset during the 17-second re-establishment window (22:28:10 → 22:28:27).</li>
+    <li>The hv_storvsc error code <code>hv 0xc0000044</code> = <strong>SRB_STATUS_ABORTED</strong>: the Hyper-V storage ring buffer drained all pending commands as aborted, not retried. EXT4 received these as write errors with error code 10 (mapped to -EIO at the BIO layer).</li>
+    <li>EXT4 <strong>delayed allocation</strong> (dax-off, ordered data mode) means that data pages were dirty in the page cache and had not yet been flushed. When the flush window coincided with the storvsc abort, those pages were lost permanently.</li>
+    <li>A <strong>prior identical event at 14:39:10</strong> (904 suppressed storvsc callbacks, sdc write failures) confirms this is a recurring pattern on this node, not a one-off. The node survived that event without a journal abort only because the earlier failure was on <em>sdc</em>, which recovered in time.</li>
+    <li>Application affected: <strong>Neo4j</strong> (threads <em>neo4j.DatabaseR</em>, <em>neo4j.RaftLogPr</em>) and sidecar container — both running on the same PV mount of sdg.</li>
+  </ul>
+</div>
+
+<!-- ─────────── REMEDIATION ─────────── -->
+<div class="remediation-box">
+  <h2>Recommended Remediation Actions</h2>
+  <ul>
+    <li><strong>Immediate:</strong> Unmount the aborted sdg EXT4 filesystem and run <code>fsck.ext4 -f /dev/sdg</code> (or sdh) from a clean boot to recover journal and repair inode table. Do not attempt to remount without fsck — the journal is aborted.</li>
+    <li><strong>Immediate:</strong> Assess Neo4j data integrity — inodes 524314 and 524348 have confirmed write loss. Run Neo4j consistency check (<code>neo4j-admin database check</code>) before restarting the database.</li>
+    <li><strong>Short-term:</strong> Enable <code>errors=remount-ro</code> on the EXT4 mount (already set on sda1, but not on sdg). This limits blast radius by remounting read-only on first error instead of continuing writes that will be lost.</li>
+    <li><strong>Short-term:</strong> File an Azure support ticket for the node <code>aks-dmv5skbo-94141891-vmss00000Q</code> — two VF rescind events in one day (14:39 and 22:28) indicate a host-level hardware or firmware issue (NIC or hypervisor).</li>
+    <li><strong>Medium-term:</strong> Consider using <strong>Azure Ultra Disk or Premium SSD v2</strong> with <code>disk.csi.azure.com/enable-async-attach: "false"</code> and enable write barriers (<code>-o barrier=1</code>) to reduce the window of lost writes during transient storage interruptions.</li>
+    <li><strong>Medium-term:</strong> For stateful workloads like Neo4j on AKS, configure <strong>Pod Disruption Budgets + PreStop hooks</strong> to gracefully flush writes before a node drain, and use Azure Disk <strong>ZRS</strong> (zone-redundant) storage to survive single-zone host events.</li>
+    <li><strong>Long-term:</strong> Instrument <code>hv_storvsc</code> error rate as a Prometheus alert (<code>node_disk_io_now</code> + custom storvsc metrics) to detect callback suppression storms before they cascade to journal aborts.</li>
+  </ul>
+</div>
+
+<footer>Generated by OpenCode incident-investigator &nbsp;|&nbsp; Source: gs://devafharvey22-hackathon/azure-disk-logs/ &nbsp;|&nbsp; kern.log.1, warn.1 &nbsp;|&nbsp; Report date: 2026-03-04</footer>
+
+</body>
+</html>
