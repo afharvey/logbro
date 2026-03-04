@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Incident Timeline — gs://devafharvey22-hackathon/azure-disk-logs/</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        max-width: 1100px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1a1a1a;
+        background: #fff;
+      }
+      h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+      p.meta { color: #666; font-size: 0.85rem; margin-bottom: 2rem; }
+      section { margin-bottom: 2rem; }
+      h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.4rem 0.75rem;
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+      }
+      table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+      th {
+        text-align: left;
+        padding: 0.4rem 0.75rem;
+        background: #f5f5f5;
+        border-bottom: 2px solid #ddd;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      td { padding: 0.35rem 0.75rem; border-bottom: 1px solid #eee; vertical-align: top; }
+      td.time { white-space: nowrap; color: #555; font-family: monospace; }
+      td.source { white-space: nowrap; color: #777; font-family: monospace; }
+      tr:last-child td { border-bottom: none; }
+      .phase-healthy h2        { background: #d4edda; color: #155724; }
+      .phase-vf-reset h2       { background: #fff3cd; color: #856404; }
+      .phase-io-failure h2     { background: #f8d7da; color: #721c24; }
+      .phase-silent-failure h2 { background: #f8d7da; color: #721c24; }
+      .phase-detection h2      { background: #d1ecf1; color: #0c5460; }
+      .phase-resolution h2     { background: #d4edda; color: #155724; }
+      section.gap { background: #fff8e1; border: 1px solid #ffe082; border-radius: 6px; padding: 1rem 1.25rem; }
+      section.gap h2 { background: none; color: #5d4037; padding: 0; margin-bottom: 0.75rem; }
+      p.gap-reason { margin-top: 0.75rem; color: #444; }
+      .causal-note { font-style: italic; color: #555; font-size: 0.8rem; padding: 0.3rem 0.75rem 0.5rem; }
+      .uptime { font-family: monospace; font-size: 0.78rem; color: #999; }
+    </style>
+  </head>
+  <body>
+    <h1>Incident Timeline — Azure Disk / EXT4 Storage Failure</h1>
+    <p class="meta">
+      Source: gs://devafharvey22-hackathon/azure-disk-logs/ &nbsp;|&nbsp;
+      Node: aks-dmv5skbo-94141891-vmss00000Q &nbsp;|&nbsp;
+      Failed device: /dev/sdg (LUN 5, 64 GiB) &nbsp;|&nbsp;
+      Generated: Wed Mar 04 2026 UTC
+    </p>
+
+    <!-- ═══════════════════════════════════════════════ PHASE: HEALTHY -->
+    <section class="phase phase-healthy">
+      <h2>Healthy — Normal Operation</h2>
+      <table>
+        <thead>
+          <tr><th>Time (UTC)</th><th>Source</th><th>Event</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="time">Jan 15 22:01:00</td>
+            <td class="source">kern.log.1</td>
+            <td>Multiple disks re-enumerated: LUN 0 → sda, LUN 1 → sdb, LUN 2 → sdc
+                <br><span class="uptime">[2627281.705524] scsi 1:0:0:0 / [2627281.825949] scsi 1:0:0:1</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:01:09–22:03:50</td>
+            <td class="source">kern.log.1</td>
+            <td>EXT4 filesystems mounted on sdb, sdc, sdd, sde, sdf — all with ordered data mode, no errors</td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:26:41</td>
+            <td class="source">kern.log.1</td>
+            <td>Disk attached as <strong>/dev/sdg</strong> (LUN 5, SCSI 1:0:0:5) — 16,777,216 × 4096-byte logical blocks = <strong>68.7 GB / 64.0 GiB</strong>; write cache disabled, read cache enabled
+                <br><span class="uptime">[2628822.598541]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:26:45</td>
+            <td class="source">kern.log.1</td>
+            <td><strong>EXT4-fs (sdg): mounted filesystem</strong> with ordered data mode. Opts: (null). Quota mode: none. — filesystem online and healthy
+                <br><span class="uptime">[2628826.846175]</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ PHASE: VF RESET -->
+    <section class="phase phase-vf-reset">
+      <h2>VF Reset — Azure Host Maintenance Event</h2>
+      <p class="causal-note">
+        ⚡ Root cause: Azure Hyper-V host maintenance triggered a PCIe VF (Virtual Function) reset.
+        The PCIe bus teardown collaterally disrupted all I/O in flight to /dev/sdg.
+      </p>
+      <table>
+        <thead>
+          <tr><th>Time (UTC)</th><th>Source</th><th>Event</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="time">Jan 15 22:28:09</td>
+            <td class="source">kern.log.1</td>
+            <td>🔴 <strong>Data path switched FROM VF: enP64055s1</strong> — Hyper-V synthetic network takes over; SR-IOV VF removed from network data path
+                <br><span class="uptime">[2628910.997942]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:09</td>
+            <td class="source">kern.log.1</td>
+            <td>hv_netvsc eth0: VF unregistering: enP64055s1 — mlx5 NIC unregistered from kernel
+                <br><span class="uptime">[2628911.033850]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:10</td>
+            <td class="source">kern.log.1</td>
+            <td>hv_netvsc eth0: <strong>VF slot 1 removed</strong>
+                <br><span class="uptime">[2628912.099286]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:10</td>
+            <td class="source">kern.log.1</td>
+            <td>⚠️ pci_bus fa37:00: <strong>busn_res: [bus 00] is released</strong> — PCIe bus reset begins; collateral I/O disruption to SCSI devices on same VMBus channel
+                <br><span class="uptime">[2628912.102201]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:27</td>
+            <td class="source">kern.log.1</td>
+            <td>hv_utils: Heartbeat IC, KVP IC, Shutdown IC, TimeSync IC — Hyper-V integration services re-handshaking (confirms active host maintenance)
+                <br><span class="uptime">[2628927.185236]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:28</td>
+            <td class="source">kern.log.1</td>
+            <td>hv_balloon: Max. dynamic memory size: 32768 MB — balloon driver re-registered
+                <br><span class="uptime">[2628928.678254]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:29</td>
+            <td class="source">kern.log.1</td>
+            <td>hv_netvsc eth0: <strong>VF slot 1 added</strong> — PCIe slot restored; PCI VMBus probing begins (mlx5 NIC at fa37:00:02.0, fw 16.30.5026)
+                <br><span class="uptime">[2628929.398201]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:29</td>
+            <td class="source">kern.log.1</td>
+            <td>pci_bus fa37:00: root bus resource [mem 0xfc0000000-0xfc00fffff] re-acquired; mlx5 NIC enabled and registering as eth1 → enP64055s1
+                <br><span class="uptime">[2628929.410473–2628929.672459]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:30</td>
+            <td class="source">kern.log.1</td>
+            <td>mlx5_core enP64055s1: <strong>Link up</strong>
+                <br><span class="uptime">[2628929.843260]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:30</td>
+            <td class="source">kern.log.1</td>
+            <td>✅ <strong>Data path switched TO VF: enP64055s1</strong> — network VF recovery complete (19 seconds after removal; <em>but storage I/O already failed</em>)
+                <br><span class="uptime">[2628929.881160]</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ PHASE: I/O FAILURE -->
+    <section class="phase phase-io-failure">
+      <h2>I/O Failure — Cascade from Write Errors to Journal Abort</h2>
+      <p class="causal-note">
+        ⚡ The PCIe bus release at 22:28:10 disrupted in-flight SCSI writes. The VF recovered at 22:28:30
+        but the EXT4 journal had already queued writes that could not complete — triggering an irreversible
+        journal abort just 6 seconds later at 22:28:36. All events within 22:28:30 are sorted by uptime offset.
+      </p>
+      <table>
+        <thead>
+          <tr><th>Time (UTC)</th><th>Source</th><th>Event</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="time">Jan 15 22:28:30</td>
+            <td class="source">kern.log.1</td>
+            <td>🔴 <strong>EXT4-fs warning (sdg): I/O error 10 writing to inode 524369</strong>, starting block 2143744 — first filesystem write failure (309ms after VF switchback)
+                <br><span class="uptime">[2628930.194532]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:30</td>
+            <td class="source">kern.log.1</td>
+            <td>Buffer I/O error on device sdg, logical block 2143744 — block layer confirms write failure
+                <br><span class="uptime">[2628930.194538]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:30</td>
+            <td class="source">kern.log.1</td>
+            <td>EXT4-fs warning (sdg): I/O error 10 writing to inode 524370, starting block 4137473
+                <br><span class="uptime">[2628930.194838]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:30</td>
+            <td class="source">kern.log.1</td>
+            <td>Buffer I/O error on device sdg, logical block 4137473
+                <br><span class="uptime">[2628930.198470]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:30</td>
+            <td class="source">kern.log.1</td>
+            <td>EXT4-fs error (sdg): <strong>ext4_get_inode_loc: inode #524348 / #524314 — unable to read itable block</strong> (comm neo4j.DatabaseR) — inode table blocks unreadable
+                <br><span class="uptime">[2628930.222187]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:30</td>
+            <td class="source">kern.log.1</td>
+            <td>EXT4-fs error (sdg) in <strong>ext4_reserve_inode_write: IO failure</strong> (×3 occurrences within same second)
+                <br><span class="uptime">[2628930.222197–2628930.237805]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:30</td>
+            <td class="source">kern.log.1</td>
+            <td>EXT4-fs error (sdg): <strong>ext4_dirty_inode: mark_inode_dirty error</strong> (inode #524314, comm neo4j.DatabaseR)
+                <br><span class="uptime">[2628930.237658]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:30</td>
+            <td class="source">kern.log.1</td>
+            <td>EXT4-fs (sdg): <strong>Delayed block allocation failed for inode 524314</strong> at logical offset 0, max blocks 1, error -5
+                <br><span class="uptime">[2628930.237812]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:30</td>
+            <td class="source">kern.log.1</td>
+            <td>💀 <strong>EXT4-fs (sdg): This should not happen!! Data will be lost</strong> — delayed allocation cannot commit; data loss confirmed for inode 524314
+                <br><span class="uptime">[2628930.237814]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:30</td>
+            <td class="source">kern.log.1</td>
+            <td>💀 <strong>EXT4-fs (sdg): This should not happen!! Data will be lost</strong> — second occurrence; inode 524348 also lost
+                <br><span class="uptime">[2628930.302819]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:30</td>
+            <td class="source">kern.log.1</td>
+            <td>EXT4-fs warning (sdg): I/O error 10 writing to inode 131262, starting block 4165124 — additional write failures cascading
+                <br><span class="uptime">[2628930.326512]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:30</td>
+            <td class="source">kern.log.1</td>
+            <td>Buffer I/O error on device sdg, logical blocks 4165124–4165131 (8 consecutive blocks)
+                <br><span class="uptime">[2628930.326518–2628930.351317]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:30</td>
+            <td class="source">kern.log.1</td>
+            <td>EXT4-fs warning (sdg): I/O error 10 writing to inode 131100, starting block 2130040
+                <br><span class="uptime">[2628930.406477]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:36</td>
+            <td class="source">kern.log.1</td>
+            <td>⛔ <strong>Aborting journal on device sdg-8</strong> — EXT4 journal abort triggered; filesystem fenced; this is the point of no return
+                <br><span class="uptime">[2628936.158980]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:36</td>
+            <td class="source">kern.log.1</td>
+            <td>Buffer I/O error on dev sdg, logical block 8421376, <strong>lost sync page write</strong> — journal superblock write failed
+                <br><span class="uptime">[2628936.161808]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:36</td>
+            <td class="source">kern.log.1</td>
+            <td>⛔ <strong>JBD2: Error -5 detected when updating journal superblock for sdg-8</strong> — journal abort confirmed at JBD2 layer
+                <br><span class="uptime">[2628936.165982]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:28:40</td>
+            <td class="source">kern.log.1</td>
+            <td>EXT4-fs warning (sdg): <strong>htree_dirblock_to_tree: inode #655361 error -5</strong> — first post-abort directory read failure (sidecar process); begins repeating every ~15s
+                <br><span class="uptime">[2628940.263031]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:34:55</td>
+            <td class="source">kern.log.1</td>
+            <td>💡 SCSI 1:0:0:5 re-enumerates as <strong>/dev/sdh</strong> (same LUN 5, same 64 GiB disk) — Azure reattached the disk under a new device name, 6m19s after journal abort
+                <br><span class="uptime">[2629315.713735]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:37:05</td>
+            <td class="source">kern.log.1</td>
+            <td>EXT4-fs error: <strong>14 callbacks suppressed</strong> — kernel rate-limiting EXT4 errors; neo4j.RaftLogPr attempting directory reads on the aborted sdg filesystem
+                <br><span class="uptime">[2629445.483782]</span></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 15 22:37:05–22:37:07</td>
+            <td class="source">kern.log.1</td>
+            <td>EXT4-fs error (sdg): <strong>__ext4_find_entry: inode #524322 / #524356</strong> (comm neo4j.RaftLogPr): reading directory lblock 0 — Neo4j Raft log reader failing on aborted filesystem</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ PHASE: SILENT FAILURE -->
+    <section class="phase phase-silent-failure">
+      <h2>Silent Failure — Filesystem Dead, Kubernetes Unaware</h2>
+      <p class="causal-note">
+        ⚡ The EXT4 journal is permanently aborted. All writes to /dev/sdg fail with error -5 (EIO).
+        The <code>htree_dirblock_to_tree inode #655361 error -5</code> message fires every ~15 seconds
+        for the entire duration. Although /dev/sdh (same LUN 5) was re-enumerated at 22:34:55, the EXT4
+        volume mounted on the old /dev/sdg path is not remounted — the filesystem remains in the aborted state.
+        VolumeAttachment reports <code>attached: true</code> throughout. No CSI driver errors surface.
+      </p>
+      <table>
+        <thead>
+          <tr><th>Time (UTC)</th><th>Source</th><th>Event</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="time">Jan 15 22:28:40 → Jan 15 23:59:57</td>
+            <td class="source">kern.log.1</td>
+            <td>EXT4-fs warning (sdg): htree_dirblock_to_tree inode #655361: lblock 0: comm sidecar: error -5 reading directory block
+                <br><em>(repeated every ~15 seconds; first at 22:28:40, last in kern.log.1 at 23:59:57 — log rotates at midnight)</em></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 16 00:00 → Jan 16 16:24+</td>
+            <td class="source">kern.log</td>
+            <td>EXT4-fs error (sdg): ext4_journal_check_start — <strong>Detected aborted journal</strong> (comm dr=fanotify_eve) — periodic bursts confirming the journal remains aborted into the next day
+                <br><em>(bursts seen at Jan 16 16:24:44 — earliest captured in kern.log; the filesystem was never remounted within the log window)</em></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ DETECTION GAP -->
+    <section class="gap">
+      <h2>Detection Gap</h2>
+      <table>
+        <tbody>
+          <tr>
+            <td class="time">Jan 15 22:28:36</td>
+            <td>First failure signal — <code>Aborting journal on device sdg-8</code></td>
+          </tr>
+          <tr>
+            <td class="time">Jan 16 16:24:44</td>
+            <td>Latest confirmed failure activity in logs (<code>Detected aborted journal</code> in kern.log); no resolution events observed</td>
+          </tr>
+          <tr>
+            <td class="time"><strong>≥ 17h 56m</strong></td>
+            <td><strong>Minimum confirmed silent failure window visible in logs</strong></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="gap-reason">
+        <strong>Why was this not detected sooner?</strong>
+        The Kubernetes <code>VolumeAttachment</code> object continued to report <code>attached: true</code>
+        throughout — the Azure Disk CSI driver does not poll filesystem health, only block device attachment state.
+        The disk (LUN 5) was re-enumerated as <code>/dev/sdh</code> at 22:34:55, which the CSI driver may have
+        interpreted as a successful reattach, even though the EXT4 journal on the mounted path <code>/dev/sdg</code>
+        was permanently aborted. Detection likely relied on application-level errors from Neo4j (the
+        <code>neo4j.DatabaseR</code> and <code>neo4j.RaftLogPr</code> processes visible in the kernel logs
+        at the moment of failure) eventually triggering a Raft panic or availability alert.
+        The exact human detection time is not present in the kernel logs provided.
+      </p>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ SUMMARY -->
+    <section>
+      <h2 style="background:#e8eaf6; color:#283593; padding:0.4rem 0.75rem; border-radius:4px; font-size:1rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Causal Chain Summary</h2>
+      <table>
+        <thead>
+          <tr><th>Step</th><th>Time (UTC)</th><th>Signal</th><th>Significance</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td class="time">Jan 15 22:26:41</td>
+            <td>scsi 1:0:0:5 → /dev/sdg attached (64 GiB)</td>
+            <td>Disk online; EXT4 mounts successfully at 22:26:45</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td class="time">Jan 15 22:28:09</td>
+            <td>Data path switched FROM VF: enP64055s1</td>
+            <td>⚡ Root cause — Azure host maintenance begins; SR-IOV VF removed</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td class="time">Jan 15 22:28:10</td>
+            <td>pci_bus fa37:00 busn_res [bus 00] released</td>
+            <td>PCIe bus reset — collateral SCSI I/O disruption begins</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td class="time">Jan 15 22:28:29–30</td>
+            <td>VF slot re-added; Data path switched TO VF</td>
+            <td>Network recovery complete (19s gap); too late for sdg writes</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td class="time">Jan 15 22:28:30</td>
+            <td>EXT4-fs warning: I/O error 10 writing to inode 524369</td>
+            <td>First filesystem write failure — 309ms after VF switchback</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td class="time">Jan 15 22:28:30</td>
+            <td>EXT4-fs: "This should not happen!! Data will be lost" (×2)</td>
+            <td>Delayed allocation failure — data loss confirmed for inodes 524314 &amp; 524348</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td class="time">Jan 15 22:28:36</td>
+            <td>Aborting journal on device sdg-8 + JBD2 Error -5</td>
+            <td>⛔ Point of no return — filesystem permanently fenced (6s after first I/O error)</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td class="time">Jan 15 22:28:40+</td>
+            <td>htree_dirblock_to_tree inode #655361 error -5 (every ~15s)</td>
+            <td>Downstream noise — sidecar process retrying reads on dead filesystem</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td class="time">Jan 15 22:34:55</td>
+            <td>scsi 1:0:0:5 re-enumerated as /dev/sdh (64 GiB)</td>
+            <td>Same LUN 5 disk reappears under new device name — EXT4 mount not recovered</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td class="time">Jan 16 16:24:44+</td>
+            <td>EXT4-fs error: Detected aborted journal (kern.log)</td>
+            <td>Journal still aborted ≥17h56m later — no in-log evidence of resolution</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ LOG INVENTORY -->
+    <section>
+      <h2 style="background:#f5f5f5; color:#333; padding:0.4rem 0.75rem; border-radius:4px; font-size:1rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Log File Inventory</h2>
+      <table>
+        <thead>
+          <tr><th>File</th><th>Size</th><th>Used</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>kern.log.1</td><td>150 KB</td><td>✅ Primary source — covers Jan 15 through midnight</td></tr>
+          <tr><td>kern.log</td><td>808 KB</td><td>✅ Secondary — covers Jan 16; confirms extended silent failure</td></tr>
+          <tr><td>dmesg / dmesg.0</td><td>45 / 43 KB</td><td>Not required — kernel ring buffer; no wall-clock timestamps</td></tr>
+          <tr><td>syslog.1 / messages.1</td><td>19.8 MB each</td><td>Not fetched — kernel logs sufficient</td></tr>
+          <tr><td>warn.1</td><td>117 KB</td><td>Not required — subset of syslog; kernel logs cover all signals</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+  </body>
+</html>
