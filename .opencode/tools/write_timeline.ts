@@ -2,7 +2,7 @@ import { tool } from "@opencode-ai/plugin"
 import path from "path"
 import fs from "fs/promises"
 
-export const write_timeline = tool({
+export default tool({
   description:
     "Write the completed incident timeline as a self-contained HTML file to the user's working directory. " +
     "Call this once at the end of every investigation with the full HTML content. " +

@@ -11,14 +11,11 @@ I teach you how to parse and interpret Linux kernel log lines, so you can extrac
 
 Every line follows this structure:
 
-```
-Mon DD HH:MM:SS <hostname> kernel: [<uptime.usec>] <subsystem> <message>
-```
+    Mon DD HH:MM:SS <hostname> kernel: [<uptime.usec>] <subsystem> <message>
 
 Example:
-```
-Jan 15 22:28:30 aks-dmv5skbo-94141891-vmss00000Q kernel: [2628930.237814] EXT4-fs (sdg): This should not happen!! Data will be lost
-```
+
+    Jan 15 22:28:30 aks-dmv5skbo-94141891-vmss00000Q kernel: [2628930.237814] EXT4-fs (sdg): This should not happen!! Data will be lost
 
 | Field | Example | Notes |
 |-------|---------|-------|
@@ -33,9 +30,7 @@ Jan 15 22:28:30 aks-dmv5skbo-94141891-vmss00000Q kernel: [2628930.237814] EXT4-f
 
 `dmesg` output has **no wall-clock timestamp** — only the uptime offset:
 
-```
-[2628930.237814] kernel: EXT4-fs (sdg): This should not happen!! Data will be lost
-```
+    [2628930.237814] kernel: EXT4-fs (sdg): This should not happen!! Data will be lost
 
 To correlate dmesg with kern.log events, match the uptime offset `[NNNNNN.NNNNNN]` values.
 
@@ -44,10 +39,9 @@ To correlate dmesg with kern.log events, match the uptime offset `[NNNNNN.NNNNNN
 When multiple events share the same wall-clock second (common during rapid failure cascades), sort by the uptime offset to establish the precise order. The offset is monotonically increasing and has microsecond resolution.
 
 Example — two events at `22:28:30`, ordered by uptime:
-```
-[2628929.881160] Data path switched to VF: enP64055s1     ← earlier
-[2628930.194532] I/O error 10 writing to inode 524369     ← later (309ms after)
-```
+
+    [2628929.881160] Data path switched to VF: enP64055s1     <- earlier
+    [2628930.194532] I/O error 10 writing to inode 524369     <- later (309ms after)
 
 ## Key kernel subsystems for storage investigation
 
@@ -68,5 +62,5 @@ Example — two events at `22:28:30`, ordered by uptime:
 
 - Device names in log lines appear as `sdg`, `sdh`, etc. — always lowercase in kernel messages
 - LUN is identified by the last digit in the SCSI address: `scsi 1:0:0:5` = LUN 5
-- The same physical disk reattaching under a new device name will have the **same SCSI address** (`1:0:0:5`) but a different device name (`[sdg]` → `[sdh]`)
+- The same physical disk reattaching under a new device name will have the **same SCSI address** (`1:0:0:5`) but a different device name (`[sdg]` -> `[sdh]`)
 - `EXT4-fs error` (no `warning`) is more severe than `EXT4-fs warning` — errors indicate active filesystem corruption

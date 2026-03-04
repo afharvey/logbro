@@ -11,17 +11,15 @@ I provide the domain knowledge to investigate Azure disk attachment failures and
 
 This is the failure sequence observed in Azure/AKS storage incidents:
 
-```
-Azure Hyper-V host maintenance
-  └─ Network VF reset (hv_netvsc)
-       └─ PCIe bus release (pci_bus)
-            └─ SCSI I/O errors on attached disk (sdX)
-                 └─ EXT4 write errors (EXT4-fs warning)
-                      └─ EXT4 journal abort (Aborting journal)
-                           └─ Filesystem remounted read-only / all ops fail
-                                └─ Application errors (Neo4j Raft panic, etc.)
-                                     └─ [13+ hours later] Alert detected
-```
+    Azure Hyper-V host maintenance
+      -> Network VF reset (hv_netvsc)
+           -> PCIe bus release (pci_bus)
+                -> SCSI I/O errors on attached disk (sdX)
+                     -> EXT4 write errors (EXT4-fs warning)
+                          -> EXT4 journal abort (Aborting journal)
+                               -> Filesystem remounted read-only / all ops fail
+                                    -> Application errors (Neo4j Raft panic, etc.)
+                                         -> [13+ hours later] Alert detected
 
 Understanding this chain tells you which log signals are **root cause** vs **downstream consequence**.
 
@@ -31,9 +29,7 @@ Understanding this chain tells you which log signals are **root cause** vs **dow
 
 Use this pattern to find the first occurrence of each signal class across the file:
 
-```
-EXT4-fs error|Aborting journal|Data path switched from VF|scsi.*Direct-Access|JBD2.*Error|Buffer I/O error on dev
-```
+    EXT4-fs error|Aborting journal|Data path switched from VF|scsi.*Direct-Access|JBD2.*Error|Buffer I/O error on dev
 
 This will locate the key timestamps. Call `gcs_grep_count` first, then `gcs_grep`.
 
@@ -64,7 +60,7 @@ These are the exact patterns observed in AKS kernel logs. Use them as grep patte
 | Data loss warning | `This should not happen.*Data will be lost` | EXT4 delayed allocation failure — data loss confirmed | 1 |
 | Journal abort | `Aborting journal on device` | Filesystem fenced — this is the point of no return | 1 |
 | JBD2 error | `JBD2.*Error.*detected` | Journal superblock update failed — confirms journal abort | 2 |
-| Disk reattach | `sd.*\[sd[a-z]\].*4096-byte logical blocks` | Disk reappears — check if device name changed (sdg → sdh) | 1 |
+| Disk reattach | `sd.*\[sd[a-z]\].*4096-byte logical blocks` | Disk reappears — check if device name changed (sdg -> sdh) | 1 |
 | Repetitive noise | `htree_dirblock_to_tree.*error -5` | Post-abort directory read failures — downstream noise, fires ~every 15s | noise |
 
 ## Handling repetitive noise
