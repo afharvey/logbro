@@ -16,7 +16,7 @@ Time to Resolution: ~18 hours
 Severity: Minor
 Category: Cloud Provider Failure
 Root Cause Component: Azure
-Environment: AKS cluster production-orch-0681
+Environment: AKS cluster *CLUSTER_NAME_REDACTED*
 
 Summary
 An Azure Hyper-V host maintenance event (network VF reset) caused a 64GB managed disk to experience I/O failures and be reattached under a new device name. The Azure CSI driver did not detect or recover from the disk identity change, leaving a Neo4j database pod without a functional mount.

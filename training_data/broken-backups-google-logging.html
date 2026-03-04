@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Incident Report — Database 2aaff013 / production-clstr-445566</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        max-width: 1100px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1a1a1a;
+        background: #fff;
+      }
+      h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+      p.meta { color: #666; font-size: 0.85rem; margin-bottom: 2rem; }
+      section { margin-bottom: 2rem; }
+      h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.4rem 0.75rem;
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+      }
+      table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+      th {
+        text-align: left;
+        padding: 0.4rem 0.75rem;
+        background: #f5f5f5;
+        border-bottom: 2px solid #ddd;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      td { padding: 0.35rem 0.75rem; border-bottom: 1px solid #eee; vertical-align: top; }
+      td.time { white-space: nowrap; color: #555; font-family: monospace; }
+      td.source { white-space: nowrap; color: #777; font-family: monospace; }
+      tr:last-child td { border-bottom: none; }
+      .phase-healthy h2        { background: #d4edda; color: #155724; }
+      .phase-io-failure h2     { background: #f8d7da; color: #721c24; }
+      .phase-detection h2      { background: #d1ecf1; color: #0c5460; }
+      section.gap { background: #fff8e1; border: 1px solid #ffe082; border-radius: 6px; padding: 1rem 1.25rem; }
+      section.gap h2 { background: none; color: #5d4037; padding: 0; margin-bottom: 0.75rem; }
+      p.gap-reason { margin-top: 0.75rem; color: #444; }
+      .summary-box {
+        background: #f0f4ff;
+        border: 1px solid #c5d0f0;
+        border-radius: 6px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 2rem;
+      }
+      .summary-box h2 {
+        background: none;
+        color: #1a3060;
+        padding: 0;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+      }
+      .summary-box ul { margin: 0.5rem 0 0 1.2rem; padding: 0; }
+      .summary-box li { margin-bottom: 0.3rem; }
+      .badge {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.1rem 0.5rem;
+        border-radius: 3px;
+        margin-right: 0.4rem;
+        vertical-align: middle;
+      }
+      .badge-warn { background: #fff3cd; color: #856404; }
+      .badge-error { background: #f8d7da; color: #721c24; }
+      .badge-info { background: #d1ecf1; color: #0c5460; }
+    </style>
+  </head>
+  <body>
+    <h1>Incident Report — Database <code>2aaff013</code></h1>
+    <p class="meta">
+      Cluster: production-clstr-445566 &nbsp;|&nbsp;
+      Project: neo4j-cloud &nbsp;|&nbsp;
+      Source: Google Cloud Logging &nbsp;|&nbsp;
+      Generated: 2026-03-04T15:47:00Z
+    </p>
+
+    <div class="summary-box">
+      <h2>Executive Summary</h2>
+      <p>
+        The Neo4j operator has been reporting a continuous reconciler conflict on the
+        <code>2aaff013-backup</code> backup schedule resource for approximately 25 minutes
+        (15:17 – 15:42 UTC). The operator repeatedly fails to update the resource due to
+        optimistic concurrency conflicts — another process is modifying the same object
+        concurrently, causing each reconcile attempt to be rejected.
+      </p>
+      <ul>
+        <li><strong>Affected resource:</strong> <code>backupschedule/2aaff013-backup</code></li>
+        <li><strong>Error type:</strong> Kubernetes optimistic concurrency conflict (<code>resourceVersion</code> mismatch)</li>
+        <li><strong>Duration:</strong> ~25 minutes and ongoing at time of query</li>
+        <li><strong>Database API reachability:</strong> No <code>context deadline exceeded</code> errors — the database itself appears reachable</li>
+        <li><strong>Storage/network layer:</strong> No kernel-level signals investigated (no GCS bucket provided)</li>
+      </ul>
+    </div>
+
+    <section class="phase phase-healthy">
+      <h2>Healthy</h2>
+      <table>
+        <thead>
+          <tr><th>Time (UTC)</th><th>Source</th><th>Event</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="time">2026-03-04 15:16:xx</td>
+            <td class="source">cloud-logging</td>
+            <td>No errors recorded for <code>2aaff013</code> — backup schedule reconciler operating normally</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="phase phase-io-failure">
+      <h2>Reconciler Conflict (Ongoing)</h2>
+      <table>
+        <thead>
+          <tr><th>Time (UTC)</th><th>Source</th><th>Event</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="time">2026-03-04 15:17:19</td>
+            <td class="source">neo4j-operator</td>
+            <td>
+              <span class="badge badge-error">ERROR</span>
+              <code>backupschedule/2aaff013-backup</code>: <em>"Operation cannot be fulfilled on backupschedules.neo4j.io: the object has been modified; please apply your changes to the latest version and try again"</em>
+              — first occurrence of reconciler conflict
+            </td>
+          </tr>
+          <tr>
+            <td class="time">15:17:19 → 15:42:16</td>
+            <td class="source">neo4j-operator</td>
+            <td>
+              <span class="badge badge-warn">REPEATED</span>
+              Same conflict error repeated <strong>20 times</strong> over ~25 minutes (~every 75 seconds).
+              Indicates the reconciler is continuously retrying but consistently losing the
+              optimistic concurrency race against another writer.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="phase phase-detection">
+      <h2>Detection</h2>
+      <table>
+        <thead>
+          <tr><th>Time (UTC)</th><th>Source</th><th>Event</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="time">2026-03-04 15:47:00</td>
+            <td class="source">investigation</td>
+            <td>
+              <span class="badge badge-info">DETECTED</span>
+              Cloud Logging queried; reconciler conflict identified. No storage or network
+              failure signals found at application layer.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="gap">
+      <h2>Analysis &amp; Probable Cause</h2>
+      <table>
+        <tbody>
+          <tr>
+            <td class="time">Root cause</td>
+            <td>Concurrent writes to the <code>2aaff013-backup</code> <code>BackupSchedule</code> resource — likely a running or recently triggered backup job updating the schedule status while the reconciler is also trying to write</td>
+          </tr>
+          <tr>
+            <td class="time">What is <em>not</em> happening</td>
+            <td>No <code>context deadline exceeded</code> errors — the Neo4j database API is reachable. No evidence of a storage or network-layer failure from Cloud Logging alone.</td>
+          </tr>
+          <tr>
+            <td class="time">Risk</td>
+            <td>Backup schedule may not be progressing correctly while the conflict persists. Backup SLA may be affected if the schedule cannot be updated.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="gap-reason">
+        <strong>Recommended actions:</strong><br>
+        1. Check whether a backup job for <code>2aaff013</code> is currently running or stuck
+           (<code>kubectl get backups -l neo4j.io/database=2aaff013</code>).<br>
+        2. If a backup is stuck, describe it and check for finalizer or status update loops.<br>
+        3. If no backup is running, inspect the operator pod logs directly for the
+           <code>backupschedule</code> controller to identify the competing writer.<br>
+        4. Consider whether a GCS bucket of kernel logs is available for this node to
+           rule out an underlying storage issue silently causing thrashing.
+      </p>
+    </section>
+  </body>
+</html>

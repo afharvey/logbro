@@ -1,13 +1,14 @@
 # logbro
 
-An AI-powered incident investigation agent for Linux storage failures on Kubernetes nodes. Point it at a GCS bucket containing node logs and it produces a structured HTML incident timeline.
+An AI-powered incident investigation agent for Neo4j databases on Kubernetes. It can query Google Cloud Logging for operator errors, analyse kernel and system logs from a GCS bucket, or both — and prints a plain text incident summary. An HTML timeline report is available on request.
 
 ## Prerequisites
 
 - [OpenCode](https://opencode.ai) installed and running
 - [Bun](https://bun.sh) installed (`curl -fsSL https://bun.sh/install | bash`)
 - `gcloud` CLI installed and authenticated (`gcloud auth login`)
-- Read access to the GCS bucket containing the node logs
+- For Cloud Logging queries: `roles/logging.viewer` on the GCP project
+- For GCS kernel log analysis: read access to the GCS bucket containing node logs
 
 ## Setup
 
@@ -23,45 +24,60 @@ No additional installation steps are required. OpenCode discovers the agent, ski
 
 ## Usage
 
-In the OpenCode TUI, invoke the agent using `@incident-investigator` and provide the GCS bucket path and the approximate time of the incident:
+Invoke the agent in the OpenCode TUI using `@incident-investigator`. The agent will ask for any missing information before proceeding.
+
+**Cloud Logging only — query operator errors for a specific database:**
+
+```
+@incident-investigator I'm investigating database 2aaff013 on cluster
+production-clstr-445566, project neo4j-cloud
+```
+
+The agent will ask for a time range ("now", "last 30 minutes", "around 22:28 Jan 15", etc.), query Cloud Logging, and print a plain text summary.
+
+**GCS kernel logs only — analyse node-level storage failure:**
 
 ```
 @incident-investigator The GCS bucket is gs://my-cluster-logs/node-logs/
 Investigate the storage failure around Jan 15 22:28 UTC.
 ```
 
-**Example using the sample dataset included in this repo:**
+**Both — full investigation merging operator errors and kernel logs:**
+
+```
+@incident-investigator Database 2aaff013 on cluster production-clstr-445566,
+project neo4j-cloud. GCS bucket: gs://my-cluster-logs/node-logs/
+Investigate around Jan 15 22:28 UTC.
+```
+
+**Sample dataset:**
 
 ```
 @incident-investigator The GCS bucket is gs://devafharvey22-hackathon/azure-disk-logs/
 Investigate the storage failure around Jan 15 22:28 UTC.
 ```
 
-The agent will:
+## What the agent does
 
-1. List the available log files in the bucket
-2. Run targeted grep searches across the relevant log files — never reading an entire file
-3. Correlate events across log sources into a structured timeline
-4. Write `timeline.html` to your current working directory
-5. Confirm the output path
+1. Asks what you want to investigate (Cloud Logging, GCS bucket, or both) and for what time range
+2. Loads only the skills it needs for the selected investigation tracks
+3. Queries Cloud Logging and/or searches kernel logs depending on what was provided
+4. Prints a plain text incident summary
+5. Asks if you want an HTML incident report — writes `timeline.html` if yes
 
 ## Output
 
-The agent writes a self-contained `timeline.html` file to the directory where you ran `opencode`. Open it in any browser — no internet connection required.
+**Plain text summary** — always printed. Covers the key events in chronological order, grouped by phase (Healthy, VF Reset, I/O Failure, Silent Failure, Detection, Resolution) with a detection gap calculation.
 
-The timeline is organised into phases:
+**HTML report** — written on request to the directory where you ran `opencode`. Self-contained with inline CSS, no external dependencies. Includes the full timeline table and a detection gap summary section.
 
-- **Healthy** — normal operation before any failure signal
-- **VF Reset** — host maintenance event
-- **I/O Failure** — first errors through journal abort
-- **Silent Failure** — filesystem dead, Kubernetes unaware
-- **Detection & Resolution** — human response and fix
+## Supported log sources
 
-A detection gap summary at the bottom shows the time elapsed between the first failure signal in the logs and the first human awareness of the incident.
+### Google Cloud Logging
 
-## Supported log files
+Queries the `neo4j-operator` and related containers for reconciler errors scoped to a specific cluster and database. Known-noisy system containers (`gke-metadata-server`, `node-exporter`, `recorder`) are excluded automatically.
 
-The agent understands the following Linux node log types stored in GCS:
+### GCS kernel logs
 
 | File | Contents |
 |------|----------|
@@ -76,16 +92,22 @@ Compressed `.gz` files are decompressed automatically.
 
 ## How it works
 
-The agent uses three custom OpenCode tools:
+### Tools
 
-- **`gcs_list`** — lists files in the bucket with sizes
-- **`gcs_grep_count`** — counts matching lines before fetching (safety check)
-- **`gcs_grep`** — streams and greps a file, with optional time-window filtering and context lines
-- **`write_timeline`** — writes the final HTML report to disk
+| Tool | Description |
+|------|-------------|
+| `cloudlogging_query` | Queries Google Cloud Logging for errors scoped to a cluster and database, with two-pass deduplication |
+| `gcs_list` | Lists files in a GCS bucket path with sizes |
+| `gcs_grep_count` | Counts matching lines before fetching (safety check) |
+| `gcs_grep` | Streams and greps a GCS log file, with optional time-window filtering and context lines |
+| `write_timeline` | Writes the HTML report to disk |
 
-Four skills provide the domain knowledge Claude uses to interpret the logs:
+### Skills
 
-- **`gcs-log-fetcher`** — log file types, rotation conventions, safe fetching protocol
-- **`kernel-log-parser`** — syslog line format, subsystem prefixes, uptime tiebreaking
-- **`storage-incident-analyzer`** — signal patterns, causal chain, two-pass search strategy
-- **`timeline-builder`** — event merging, deduplication, phase grouping, HTML output format
+| Skill | Description |
+|-------|-------------|
+| `cloud-logging-querier` | When to use Cloud Logging, required inputs, noise exclusions, neo4j-operator log structure, key error patterns |
+| `gcs-log-fetcher` | Log file types, rotation conventions, safe fetching protocol |
+| `kernel-log-parser` | Syslog line format, subsystem prefixes, uptime tiebreaking |
+| `storage-incident-analyzer` | Signal patterns, causal chain, two-pass search strategy |
+| `timeline-builder` | Event merging, deduplication, phase grouping, HTML output format |
